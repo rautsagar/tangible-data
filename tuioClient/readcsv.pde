@@ -3,15 +3,21 @@
 
 class ReadCSV {
   String filePath;
-  int length;
+  int length;  //Number of rows in the dataset
+  int columns; //Number of columns in the dataset
   String[] lines;
   float[] max = new float[9];
   float[] min = new float[9];
   float[] range = new float[9];
+  
   ReadCSV(String path) {
     filePath = path;
-    lines = loadStrings(filePath);
-    length = lines.length-1;
+    lines = loadStrings(filePath);      
+    length = lines.length-1;        //read number of rows 
+    
+    String[] tokens = split(lines[0], ",");
+    columns =  tokens.length;      //read number of columns 
+    println("the data has: "+length+"rows and "+ columns+ " columns");
     max = new float[9];
     min = new float[9];
   }
@@ -38,19 +44,22 @@ class ReadCSV {
 
     DataPoint[] points = new DataPoint[length];
 
-    String[] tokens1 = split(lines[1], ",");
-    for (int k = 0; k < 9; k++) {
+    String[] tokens1 = split(lines[1], ",");        //get values in the first row
+    
+    
+    for (int k = 0; k < 9; k++) {                  //Pre-populate the min and max arrays
       max[k] = 0;
       min[k] = Float.parseFloat(tokens1[k+3]);
     }
 
     println("Loading points..");
 
-    for (int i = 0; i<length; i++) {
+    for (int i = 0; i<length; i++) {              //Iterate row-by-row and populate datapoints with dimension values
 
       String[] tokens = split(lines[i+1], ",");
       float[] values = new float[9];
       String name = tokens[0];
+      
       for (int k = 0, j = 3; k < 9; k++, j++) { 
         values[k] = Float.parseFloat(tokens[j]);
 

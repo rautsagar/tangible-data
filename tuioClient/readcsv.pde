@@ -5,10 +5,11 @@ class ReadCSV {
   String filePath;
   int length;  //Number of rows in the dataset
   int columns; //Number of columns in the dataset
-  String[] lines;
-  float[] max = new float[9];
-  float[] min = new float[9];
-  float[] range = new float[9];
+  String[] lines;  //Read all the rows from the CSV here
+  float[] max;
+  float[] min;
+  float[] range;
+  String[] dimensions;   //names of all the data dimensions
   
   ReadCSV(String path) {
     filePath = path;
@@ -18,8 +19,9 @@ class ReadCSV {
     String[] tokens = split(lines[0], ",");
     columns =  tokens.length;      //read number of columns 
     println("the data has: "+length+"rows and "+ columns+ " columns");
-    max = new float[9];
-    min = new float[9];
+    max = new float[columns];
+    min = new float[columns];
+    range = new float[columns];
   }
 
   String getEntry(int line, int column) {
@@ -28,28 +30,21 @@ class ReadCSV {
     return tokens[column - 1];
   }
 
-  float[][] getTwoFields(int col1, int col2) {
-
-    float[][] columns = new float[length][2];    
-    for (int i = 0; i<length; i++) {
-      String[] tokens = split(lines[i+1], ",");
-      columns[i][0] = Float.parseFloat(tokens[col1-1]);
-      columns[i][1] = Float.parseFloat(tokens[col2-1]);
-    }
-
-    return columns;
-  }
-
+  
   DataPoint[] getPoints() {
 
     DataPoint[] points = new DataPoint[length];
-
+    
+    String[] token0 = split(lines[0], ",");  //Get the titles from the first row
+    dimensions = new String[columns - 1];
+    arrayCopy(token0, 1, dimensions, 0, columns-1);   //copy dimension names except "name"
+    
     String[] tokens1 = split(lines[1], ",");        //get values in the first row
     
     
     for (int k = 0; k < 9; k++) {                  //Pre-populate the min and max arrays
       max[k] = 0;
-      min[k] = Float.parseFloat(tokens1[k+3]);
+      min[k] = Float.parseFloat(tokens1[k+1]);
     }
 
     println("Loading points..");
@@ -60,7 +55,7 @@ class ReadCSV {
       float[] values = new float[9];
       String name = tokens[0];
       
-      for (int k = 0, j = 3; k < 9; k++, j++) { 
+      for (int k = 0, j = 1; k < 9; k++, j++) { 
         values[k] = Float.parseFloat(tokens[j]);
 
         if (values[k] > max[k]) {
@@ -73,7 +68,7 @@ class ReadCSV {
 
 
 
-      points[i] = new DataPoint(name, values[0], values[1], values[2], values[3], values[4], values[5], values[6], values[7], values[8]);
+      points[i] = new DataPoint(name, dimensions, values);
     }
 
     for (int k = 0; k < 9; k++) {

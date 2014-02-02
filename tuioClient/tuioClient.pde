@@ -88,41 +88,50 @@ void setup()
   tuioClient  = new TuioProcessing(this);
 
 
-  availableAttr = new ArrayList<String>();
-  availableAttr.add("calories");
-  availableAttr.add("proteins");
-  availableAttr.add("fats");
-  availableAttr.add("sodium");
-  availableAttr.add("fiber");
-  availableAttr.add("carbs");
-  availableAttr.add("sugars");
-  availableAttr.add("potassium");
-  availableAttr.add("vitamins");
-
-  idToAttr = new HashMap<Integer, String>();
-
-  idToAttr.put(111, "calories"); 
-  idToAttr.put(112, "proteins"); 
-  idToAttr.put(113, "fats");
-  idToAttr.put(114, "sodium"); 
-  idToAttr.put(115, "fiber"); 
-  idToAttr.put(116, "carbs");
-  idToAttr.put(117, "sugars"); 
-  idToAttr.put(118, "potassium"); 
-  idToAttr.put(119, "vitamins");
+  
 
 
 
   cereals = new ReadCSV("data/cereals.csv"); //Read the cereals dataset csv
-  columns = cereals.getTwoFields(4, 5); //Create a point for each entry in the dataset
+  //columns = cereals.getTwoFields(4, 5); 
+  
+  
+  availableAttr = new ArrayList<String>();
+//  availableAttr.add("calories");
+//  availableAttr.add("proteins");
+//  availableAttr.add("fats");
+//  availableAttr.add("sodium");
+//  availableAttr.add("fiber");
+//  availableAttr.add("carbs");
+//  availableAttr.add("sugars");
+//  availableAttr.add("potassium");
+//  availableAttr.add("vitamins");
 
-  datapoints = cereals.getPoints();
+  idToAttr = new HashMap<Integer, String>();
+//  idToAttr.put(111, "calories"); 
+//  idToAttr.put(112, "proteins"); 
+//  idToAttr.put(113, "fats");
+//  idToAttr.put(114, "sodium"); 
+//  idToAttr.put(115, "fiber"); 
+//  idToAttr.put(116, "carbs");
+//  idToAttr.put(117, "sugars"); 
+//  idToAttr.put(118, "potassium"); 
+//  idToAttr.put(119, "vitamins");
+  
+  
+
+  datapoints = cereals.getPoints();          //Create a point for each entry in the dataset
   for (int i = 0; i < datapoints.length; i++) {
-    datapoints[i].setloc("fats", "fiber", screenWidth/2);
-    datapoints[i].fillNorm(cereals.min, cereals.range);
+    datapoints[i].setloc("Fat", "Fiber", screenWidth/2);
+    datapoints[i].fillNorm(cereals.min, cereals.range, cereals.dimensions);
     //    datapoints[i].fillNorm(cereals.min, cereals.range);
   }
-
+  
+for(int i = 0; i < cereals.dimensions.length; i++){
+    availableAttr.add(cereals.dimensions[i]);
+    idToAttr.put(Integer.parseInt("11"+(i+1)),cereals.dimensions[i]);
+  }
+  
   closestPoint = 0;
 
   fieldsMenu = new menu(this, availableAttr); //pass the data-field names to the menu

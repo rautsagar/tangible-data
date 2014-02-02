@@ -7,6 +7,7 @@ class DataPoint {
   HashMap<String, Float> dataval;
   HashMap<String, Float> normdata;
   boolean line = false;
+  String[] attrNames;
 
   // CREATE
   DataPoint() {
@@ -16,27 +17,33 @@ class DataPoint {
   }
 
 
-  DataPoint(String title,float cal, float pro, float fat, float sod, float fib, float car, float sug, float pot, float vit) {
+  DataPoint(String title, String[] names , float[] vals) {
     name = title;
     //normalizing values
     loc = new pt();     //initialize the location as the point
-
+    attrNames = names;
     dest = null;
     v = V(0, 0);
     dataval = new HashMap<String, Float>();
-    dataval.put("calories", cal);
-    dataval.put("proteins", pro);
-    dataval.put("fats", fat); 
-    dataval.put("sodium", sod); 
-    dataval.put("fiber", fib); 
-    dataval.put("carbs", car); 
-    dataval.put("sugars", sug); 
-    dataval.put("potassium", pot); 
-    dataval.put("vitamins", vit);
+    
+    for(int i = 0; i < vals.length; i++){
+      println("Inserting" + names[i]);
+      dataval.put(names[i], vals[i]);
+    }
+    
+//    dataval.put("proteins", pro);
+//    dataval.put("fats", fat); 
+//    dataval.put("sodium", sod); 
+//    dataval.put("fiber", fib); 
+//    dataval.put("carbs", car); 
+//    dataval.put("sugars", sug); 
+//    dataval.put("potassium", pot); 
+//    dataval.put("vitamins", vit);
   }   
   
   DataPoint (DataPoint otherPoint){    
     name = otherPoint.name;
+    String[] attrib = otherPoint.attrNames;
     //normalizing values
     if(otherPoint.loc != null)
       loc = P(otherPoint.loc);
@@ -46,35 +53,45 @@ class DataPoint {
     v = V(otherPoint.v);
     
     normdata = new HashMap<String, Float>();
-    normdata.put("calories", otherPoint.getNormalizedValue("calories"));
-    normdata.put("proteins", otherPoint.getNormalizedValue("proteins"));
-    normdata.put("fats", otherPoint.getNormalizedValue("fats")); 
-    normdata.put("sodium", otherPoint.getNormalizedValue("sodium")); 
-    normdata.put("fiber", otherPoint.getNormalizedValue("fiber")); 
-    normdata.put("carbs", otherPoint.getNormalizedValue("carbs")); 
-    normdata.put("sugars", otherPoint.getNormalizedValue("sugars")); 
-    normdata.put("potassium", otherPoint.getNormalizedValue("potassium")); 
-    normdata.put("vitamins", otherPoint.getNormalizedValue("vitamins"));   
+    for(int i = 0; i < 9; i++){
+      String dimName = attrib[i];
+      normdata.put(dimName, otherPoint.getNormalizedValue(dimName));
+    }
+//    normdata.put(attr.get(0), otherPoint.getNormalizedValue(attr[0]));
+//    normdata.put(attr[1], otherPoint.getNormalizedValue(attr[1]));
+//    normdata.put(attr[2], otherPoint.getNormalizedValue(attr[2])); 
+//    normdata.put(attr[3], otherPoint.getNormalizedValue(attr[3])); 
+//    normdata.put(attr[4], otherPoint.getNormalizedValue(attr[4])); 
+//    normdata.put(attr[5], otherPoint.getNormalizedValue(attr[5])); 
+//    normdata.put(attr[6], otherPoint.getNormalizedValue(attr[6])); 
+//    normdata.put(attr[7], otherPoint.getNormalizedValue(attr[7])); 
+//    normdata.put(attr[8], otherPoint.getNormalizedValue(attr[8]));   
     
   }
 
 
   //Normalize each data in a range from 0-1
-  void fillNorm(float[] min, float[] range) {
+  void fillNorm(float[] min, float[] range, String[] names) {
     //    println("Filling normalized values");
 
     //Switched these over to normalized in the range of 0-1, making vector manipulation much easier
     normdata = new HashMap<String, Float>();
     float normalizedMax = 1f;
-    normdata.put("calories", ((dataval.get("calories")-min[0])*normalizedMax)/range[0]);
-    normdata.put("proteins", ((dataval.get("proteins")-min[1])*normalizedMax)/range[1]);
-    normdata.put("fats", ((dataval.get("fats")-min[2])*normalizedMax)/range[2]);
-    normdata.put("sodium", ((dataval.get("sodium")-min[3])*normalizedMax)/range[3]);
-    normdata.put("fiber", ((dataval.get("fiber")-min[4])*normalizedMax)/range[4]);
-    normdata.put("carbs", ((dataval.get("carbs")-min[5])*normalizedMax)/range[5]);
-    normdata.put("sugars", ((dataval.get("sugars")-min[6])*normalizedMax)/range[6]);
-    normdata.put("potassium", ((dataval.get("potassium")-min[7])*normalizedMax)/range[7]);
-    normdata.put("vitamins", ((dataval.get("vitamins")-min[8])*normalizedMax)/range[8]);
+    
+    
+    for(int i = 0; i < names.length; i++){
+      
+      normdata.put(names[i], ((dataval.get(names[i])-min[i])*normalizedMax)/range[i]);
+    }
+//    normdata.put("calories", ((dataval.get("calories")-min[0])*normalizedMax)/range[0]);
+//    normdata.put("proteins", ((dataval.get("proteins")-min[1])*normalizedMax)/range[1]);
+//    normdata.put("fats", ((dataval.get("fats")-min[2])*normalizedMax)/range[2]);
+//    normdata.put("sodium", ((dataval.get("sodium")-min[3])*normalizedMax)/range[3]);
+//    normdata.put("fiber", ((dataval.get("fiber")-min[4])*normalizedMax)/range[4]);
+//    normdata.put("carbs", ((dataval.get("carbs")-min[5])*normalizedMax)/range[5]);
+//    normdata.put("sugars", ((dataval.get("sugars")-min[6])*normalizedMax)/range[6]);
+//    normdata.put("potassium", ((dataval.get("potassium")-min[7])*normalizedMax)/range[7]);
+//    normdata.put("vitamins", ((dataval.get("vitamins")-min[8])*normalizedMax)/range[8]);
 
     //    for (String key : normdata.keySet()) {
     //      println(normdata.get(key));

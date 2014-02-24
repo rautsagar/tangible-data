@@ -44,7 +44,7 @@ ReadCSV cereals;
 int screenWidth = 1024, screenHeight = 768;
 float[][] columns;
 DataPoint[] datapoints;
-Boolean showPtInfo = false;
+Boolean showPtInfo = false, quickViz = false;
 int closestPoint;
 
 ArrayList<Axis> axisList;
@@ -63,11 +63,13 @@ ArrayList<String> availableAttr; //Contains a list of attributes which can be as
 menu fieldsMenu; //The object of the menu class, used to show the list of attributes
 int menuFiducial = 12; //The id of the fiducial which brings up the menu
 int pointyFiducial = 31; // The name says it all
+int lassoFiducial = 28;  //The lasso used to draw curves
+int quickFiducial = 29;  //A special marker to trigger quick viz
 
 
 void setup()
 {
-  //size(screen.width,screen.height);
+  
   size(screenWidth, screenHeight);
   noStroke();
   fill(0);
@@ -87,44 +89,18 @@ void setup()
   // an implementation of the TUIO callback methods (see below)
   tuioClient  = new TuioProcessing(this);
 
-
-  
-
-
-
   cereals = new ReadCSV("data/cereals.csv"); //Read the cereals dataset csv
-  //columns = cereals.getTwoFields(4, 5); 
-  
-  
+ 
   availableAttr = new ArrayList<String>();
-//  availableAttr.add("calories");
-//  availableAttr.add("proteins");
-//  availableAttr.add("fats");
-//  availableAttr.add("sodium");
-//  availableAttr.add("fiber");
-//  availableAttr.add("carbs");
-//  availableAttr.add("sugars");
-//  availableAttr.add("potassium");
-//  availableAttr.add("vitamins");
 
   idToAttr = new HashMap<Integer, String>();
-//  idToAttr.put(111, "calories"); 
-//  idToAttr.put(112, "proteins"); 
-//  idToAttr.put(113, "fats");
-//  idToAttr.put(114, "sodium"); 
-//  idToAttr.put(115, "fiber"); 
-//  idToAttr.put(116, "carbs");
-//  idToAttr.put(117, "sugars"); 
-//  idToAttr.put(118, "potassium"); 
-//  idToAttr.put(119, "vitamins");
-  
   
 
   datapoints = cereals.getPoints();          //Create a point for each entry in the dataset
   for (int i = 0; i < datapoints.length; i++) {
     datapoints[i].setloc("Fat", "Fiber", screenWidth/2);
     datapoints[i].fillNorm(cereals.min, cereals.range, cereals.dimensions);
-    //    datapoints[i].fillNorm(cereals.min, cereals.range);
+   
   }
   
 for(int i = 0; i < cereals.dimensions.length; i++){
@@ -164,6 +140,32 @@ void draw()
   for (int i=0;i<tuioObjectList.size();i++) {
     TuioObject tobj = (TuioObject)tuioObjectList.elementAt(i);
     int id = tobj.getSymbolID();
+    
+     if(id == lassoFiducial){
+      
+
+   // TuioCursor tcur = (TuioCursor)tuioCursorList.elementAt(i);
+    Vector pointList = tobj.getPath();
+
+    if (pointList.size()>0) {
+      stroke(0, 0, 255);
+      TuioPoint start_point = (TuioPoint)pointList.firstElement();
+
+      for (int j=0;j<pointList.size();j++) {
+        TuioPoint end_point = (TuioPoint)pointList.elementAt(j);
+        line(start_point.getScreenX(width), start_point.getScreenY(height), end_point.getScreenX(width), end_point.getScreenY(height));
+        start_point = end_point;
+      }
+
+      stroke(192, 192, 192);
+      fill(192, 192, 192);
+      ellipse( tobj.getScreenX(width), tobj.getScreenY(height), cur_size, cur_size);
+      fill(0);
+      text(""+ tobj.getSymbolID(), tobj.getScreenX(width)-5, tobj.getScreenY(height)+5);
+    }
+  
+    }
+    
 
     if (id == pointyFiducial) {
 
@@ -244,8 +246,10 @@ void draw()
   synchronized(this) {
     
     
-    
-    for (DataPoint[] set : pointSets) {
+    //Move each point towards the magnet
+    if(!quickViz){
+      
+          for (DataPoint[] set : pointSets) {
       //Loop to display each datapoint on screen
       for (int i = 0; i < set.length; i++) {
         //  strokeWeight (10 - (i*10)/cereals.length);
@@ -265,12 +269,12 @@ void draw()
           }
           else
             set[i].showInfo();           
-          set[i].showpt();  
+            set[i].showpt();  
         }
         else{
           if(set[i].line){
             stroke(0,80);
-           strokeWeight(1); 
+             strokeWeight(1); 
           }         
           set[i].showpt();  
         }        
@@ -280,7 +284,9 @@ void draw()
 //          datapoints[i].showvec();
 //        }
       }
+    
     }
+}
   }
   popStyle();
 }
@@ -403,10 +409,10 @@ void updateTuioObject (TuioObject tobj) {
     pt ray = P(0, -object_size);
     ray = ray.add(fidLoc);
     float angle = tobj.getAngle();
-    ray = R(ray, angle + HALF_PI, fidLoc);  
+    ray = R(ray, angle - HALF_PI, fidLoc);  
    
     
-//    ray.show();
+   //ray.show(); //Helpful while debugging
    
     for(DataPoint[] set: pointSets){
     for (int i = 0; i< set.length; i++) {
@@ -900,3 +906,7 @@ void checkAssign() {
   }
 }
 
+//Checks if any quickviz markers are present. If yes, performs appropriate actions
+void checkQuickViz(){
+  text("QuickViz", screenWidth, 30);
+}

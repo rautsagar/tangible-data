@@ -44,16 +44,19 @@ ReadCSV cereals;
 int screenWidth = 1024, screenHeight = 768;
 float[][] columns;
 DataPoint[] datapoints;
-Boolean showPtInfo = false, quickViz = false;
-int closestPoint;
-
+Boolean showPtInfo = false, quickViz = false, drawing = false;
 ArrayList<Axis> axisList;
 ArrayList<DataPoint[]> pointSets;
+
+int closestPoint;
+int totalPoints;
+String latestAttribute = "Fat";
+
 Boolean fiducialIn = false;
 int fiducialId = 0;
 float speed = 3;
 pt origin; //Don't forget to get rid of this before turning in.
-boolean drawing = false;
+
 
 
 HashMap<Integer, String> idToAttr;  //Maps from fiducial id to the attribute it represents
@@ -61,6 +64,8 @@ Vector tuioObjectList;
 ArrayList<String> availableAttr; //Contains a list of attributes which can be assigned to new fiducials 
 
 menu fieldsMenu; //The object of the menu class, used to show the list of attributes
+
+//Special Fiducial ID's
 int menuFiducial = 12; //The id of the fiducial which brings up the menu
 int pointyFiducial = 31; // The name says it all
 int lassoFiducial = 28;  //The lasso used to draw curves
@@ -96,8 +101,10 @@ void setup()
   idToAttr = new HashMap<Integer, String>();
   
 
-  datapoints = cereals.getPoints();          //Create a point for each entry in the dataset
-  for (int i = 0; i < datapoints.length; i++) {
+  datapoints = cereals.getPoints();   //Create a point for each entry in the dataset
+  totalPoints = datapoints.length;
+  //Set initial location on screen
+  for (int i = 0; i < totalPoints; i++) {
     datapoints[i].setloc("Fat", "Fiber", screenWidth/2);
     datapoints[i].fillNorm(cereals.min, cereals.range, cereals.dimensions);
    
@@ -124,9 +131,12 @@ void draw()
   background(220);
   textFont(font, 18*scale_factor);
   float obj_size = object_size*scale_factor; 
-  float cur_size = cursor_size*scale_factor; 
+  float cur_size = cursor_size*scale_factor;
+  checkQuickViz();
+  
+  
 
-  text("No of points:"+datapoints.length, 10, 30);
+  text("No of points:"+totalPoints, 10, 30);
 
   //  pushStyle();
   //  fill(0, 150, 0);
@@ -228,15 +238,15 @@ void draw()
   //Loop to display each axis on screen
   //Because of the way the axis list is constructed, there
   //is a risk of a concurrent modification exception here.
-  synchronized(this) {
-    pushStyle();
-    for (Axis a: axisList) {
-      a.draw();
-    }  
-    popStyle();
-  }
+//  synchronized(this) {
+//    pushStyle();
+//    for (Axis a: axisList) {
+//      a.draw();
+//    }  
+//    popStyle();
+//  }
 
-  text("No of points:"+datapoints.length, 10, 30);
+  text("No of points:"+totalPoints, 10, 30);
   pushStyle();
   checkAssign();    //Check if it is possible to assign a value to the fiducial
   
@@ -262,7 +272,10 @@ void draw()
         
         //
         if (i == closestPoint && showPtInfo) {
+         
+            drawBarChart(latestAttribute, i);
           
+           
           if(set[i].line){
             stroke(0, 128, 255);
             strokeWeight(2);
@@ -317,8 +330,8 @@ void addTuioObject(TuioObject tobj) {
       fiducialId = tobj.getSymbolID();
     }
     else if (id < 119 && id > 110) {
-      createAxisList();
-      generateAxisPositions();
+      //createAxisList();
+      //generateAxisPositions();
     }
   } 
   else if (id == pointyFiducial) {
@@ -345,8 +358,8 @@ void removeTuioObject(TuioObject tobj) {
 
   int id = tobj.getSymbolID();
   if (id < 119 && id > 110) {
-    createAxisList();
-    generateAxisPositions();
+    //createAxisList();
+   // generateAxisPositions();
   }
   else if (id == menuFiducial) {        //This is the id of the "Menu/Assignment fiducial" 
     fieldsMenu.hide();
@@ -383,19 +396,20 @@ void updateTuioObject (TuioObject tobj) {
 
   if (idToAttr.containsKey(id)) {
     if (id<9 && id>=0) {
+      latestAttribute = idToAttr.get(id);
       //Calculate the vector from each datapoint to the fiducial and move it
       if (pointSets.isEmpty())
         pointSets.add(copyDataPoints(datapoints));
         
       for (DataPoint[] set : pointSets) {
         for (int i = 0; i < set.length; i++) {
-          set[i].setvec(fidPt, idToAttr.get(id));
+          set[i].setvec(fidPt, latestAttribute);
           set[i].move(speed);
         }
       }
     }
     else if (id < 119 && id > 110) {
-      generateAxisPositions();
+      //generateAxisPositions();
     }
   }
   else if (id == menuFiducial) {
@@ -908,5 +922,40 @@ void checkAssign() {
 
 //Checks if any quickviz markers are present. If yes, performs appropriate actions
 void checkQuickViz(){
-  text("QuickViz", screenWidth, 30);
+  text("QuickViz", screenWidth/2, 30);
+}
+
+//Draw a Horizontal bar chart linked to the data points
+void drawBarChart(String attribute, int highlight){
+  int chartWidth = screenWidth/totalPoints; 
+  int padding = 10;
+  int startX = 0;
+  int infoY = screenHeight - 250;
+  float barLength;
+ 
+   pushStyle();
+   rect(10,infoY, 100,125);
+   fill(black);
+   textSize(12);
+   for(String attr : availableAttr){
+     infoY += 15;
+     float value = datapoints[highlight].dataval.get(attr);
+     text(attr + " : "+ value, 10, infoY);
+     
+   }
+   
+   text("Showing" + attribute, 10, screenHeight-100 );
+            
+            
+  for(int i = 0; i < totalPoints; i++){
+    
+    if(i == highlight){ 
+      fill(red);
+    }else{fill(grey);
+    }
+     barLength = 100*(datapoints[i].getNormalizedValue(attribute));
+    rect(startX, screenHeight - barLength, 5, barLength);
+    startX += chartWidth;
+  }
+ popStyle(); 
 }

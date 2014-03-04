@@ -43,7 +43,7 @@ PFont font;
 ReadCSV cereals;
 int screenWidth = 1024, screenHeight = 768;
 float[][] columns;
-DataPoint[] datapoints;
+DataPoint[] datapoints, sortedpoints;
 Boolean showPtInfo = false, quickViz = false, drawing = false;
 ArrayList<Axis> axisList;
 ArrayList<DataPoint[]> pointSets;
@@ -51,6 +51,7 @@ ArrayList<DataPoint[]> pointSets;
 int closestPoint;
 int totalPoints;
 String latestAttribute = "Fat";
+String latestAttributeTemp;
 
 Boolean fiducialIn = false;
 int fiducialId = 0;
@@ -272,8 +273,8 @@ void draw()
         
         //
         if (i == closestPoint && showPtInfo) {
-         
-            drawBarChart(latestAttribute, i);
+            
+            drawBarChart(latestAttribute, set[i].name, i);
           
            
           if(set[i].line){
@@ -396,7 +397,15 @@ void updateTuioObject (TuioObject tobj) {
 
   if (idToAttr.containsKey(id)) {
     if (id<9 && id>=0) {
-      latestAttribute = idToAttr.get(id);
+      latestAttributeTemp = idToAttr.get(id);
+      
+      if(latestAttributeTemp != latestAttribute){
+        MergeSort sorter = new MergeSort(datapoints, latestAttributeTemp);
+        sorter.MSort(0, totalPoints-1);
+        sortedpoints = sorter.getSorted();
+        
+      }
+      latestAttribute = latestAttributeTemp;
       //Calculate the vector from each datapoint to the fiducial and move it
       if (pointSets.isEmpty())
         pointSets.add(copyDataPoints(datapoints));
@@ -903,20 +912,39 @@ void keyPressed() {
 void checkAssign() {
   if (tuioObjectList.size() == 2 && availableAttr.size() > 0) {
 
+
+ 
     TuioObject tobj = (TuioObject)tuioObjectList.elementAt(0);
     int id1 = tobj.getSymbolID();
+    pt loc1 = P(tobj.getScreenX(width), tobj.getScreenY(height));
     tobj = (TuioObject)tuioObjectList.elementAt(1);
     int id2 = tobj.getSymbolID();
-    if (id1 == menuFiducial && !idToAttr.containsKey(id2) && id2 != pointyFiducial) {
-      idToAttr.put(id2, availableAttr.get(0));
-      availableAttr.remove(0);
-      fieldsMenu.reDraw(availableAttr);
+    pt loc2 = P(tobj.getScreenX(width), tobj.getScreenY(height));
+    float dist;
+    
+    if(id1 == menuFiducial || id2 == menuFiducial){
+      dist = d(loc1, loc2);
+      
+      //Assign the attribute only if menu fiducial & blank fiducial are less than 100px apart
+      if(dist < 100){
+            if (id1 == menuFiducial && !idToAttr.containsKey(id2) && id2 != pointyFiducial) {
+          idToAttr.put(id2, availableAttr.get(0));
+          availableAttr.remove(0);
+          fieldsMenu.reDraw(availableAttr);
+        }
+        
+        else if (id2 == menuFiducial && !idToAttr.containsKey(id1) && id1 != pointyFiducial) {
+          idToAttr.put(id1, availableAttr.get(0));
+          availableAttr.remove(0);
+          fieldsMenu.reDraw(availableAttr);
     }
-    else if (id2 == menuFiducial && !idToAttr.containsKey(id1) && id1 != pointyFiducial) {
-      idToAttr.put(id1, availableAttr.get(0));
-      availableAttr.remove(0);
-      fieldsMenu.reDraw(availableAttr);
+        
+      }
+       
+    
+      
     }
+   
   }
 }
 
@@ -926,7 +954,7 @@ void checkQuickViz(){
 }
 
 //Draw a Horizontal bar chart linked to the data points
-void drawBarChart(String attribute, int highlight){
+void drawBarChart(String attribute, String highlight, int ptno){
   int chartWidth = screenWidth/totalPoints; 
   int padding = 10;
   int startX = 0;
@@ -939,7 +967,7 @@ void drawBarChart(String attribute, int highlight){
    textSize(12);
    for(String attr : availableAttr){
      infoY += 15;
-     float value = datapoints[highlight].dataval.get(attr);
+     float value = datapoints[ptno].dataval.get(attr);
      text(attr + " : "+ value, 10, infoY);
      
    }
@@ -949,13 +977,14 @@ void drawBarChart(String attribute, int highlight){
             
   for(int i = 0; i < totalPoints; i++){
     
-    if(i == highlight){ 
+    if(sortedpoints[i].name.equals(highlight)){ 
       fill(red);
     }else{fill(grey);
     }
-     barLength = 100*(datapoints[i].getNormalizedValue(attribute));
+     barLength = 100*(sortedpoints[i].getNormalizedValue(attribute));
     rect(startX, screenHeight - barLength, 5, barLength);
     startX += chartWidth;
   }
  popStyle(); 
 }
+

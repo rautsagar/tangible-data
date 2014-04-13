@@ -436,6 +436,8 @@ synchronized void createAxisList() {
     int id = tobj.getSymbolID();
     if (id > 110 && id < 119) {
       TuioObject addedObject = null;
+      
+      //Create axes, and add each new object to all axes
       for (Axis a: axisList) {
         addedObject = a.addTuioObject(tobj);
       }
@@ -448,15 +450,7 @@ synchronized void createAxisList() {
 }
 
 
-DataPoint[] copyDataPoints(DataPoint[] set) {
-  DataPoint[] copiedSet = new DataPoint[set.length];
 
-  for (int i = 0; i < copiedSet.length; i++) {
-    copiedSet[i] = new DataPoint(set[i]);
-  }
-
-  return copiedSet;
-}
 
 //Generate the coordinate positions for all dust particles and set them
 synchronized void generateAxisPositions() {
@@ -619,6 +613,16 @@ synchronized void generateAxisPositions() {
   }
 }
 
+
+DataPoint[] copyDataPoints(DataPoint[] set) {
+  DataPoint[] copiedSet = new DataPoint[set.length];
+
+  for (int i = 0; i < copiedSet.length; i++) {
+    copiedSet[i] = new DataPoint(set[i]);
+  }
+
+  return copiedSet;
+}
 
 //Returns the point of intersection between two lines. 
 //Returns null if the lines are parallel.
